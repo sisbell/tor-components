@@ -22,13 +22,31 @@ import java.util.List;
 public final class TorConfigBuilder {
 
     private final TorSettings settings;
-    private final OnionProxyContext context;
+
+    private File controlPortFile;
+
+    private File cookieAuthFile;
+
+    private File geoIpFile;
+
+    private File geoIpV6File;
+
+    private File nameserverFile;
+
+    private InputStream bridgesStream;
 
     private StringBuffer buffer = new StringBuffer();
 
-    public TorConfigBuilder(OnionProxyContext context) {
-        this.settings = context.getSettings();
-        this.context = context;
+    public TorConfigBuilder(TorSettings torSettings, InputStream bridgesStream, TorConfigFiles configFiles) {
+        this.settings = torSettings;
+        this.bridgesStream = bridgesStream;
+        if (configFiles != null) {
+            this.controlPortFile = configFiles.getControlPortFile();
+            this.cookieAuthFile = configFiles.getCookieAuthFile();
+            this.geoIpFile = configFiles.getGeoIpFile();
+            this.geoIpV6File = configFiles.getGeoIpV6File();
+            this.nameserverFile = configFiles.getNameserverFile();
+        }
     }
 
     /**
@@ -131,8 +149,11 @@ public final class TorConfigBuilder {
     }
 
     public TorConfigBuilder cookieAuthentication() {
-        return writeTrueProperty("CookieAuthentication")
-                .writeLine("CookieAuthFile", context.getConfig().getCookieAuthFile().getAbsolutePath());
+        if (cookieAuthFile != null) {
+            return writeTrueProperty("CookieAuthentication")
+                    .writeLine("CookieAuthFile", cookieAuthFile.getAbsolutePath());
+        }
+        return this;
     }
 
     @SettingsConfig
@@ -155,7 +176,10 @@ public final class TorConfigBuilder {
 
     @SettingsConfig
     public TorConfigBuilder controlPortWriteToFileFromConfig() {
-        return controlPortWriteToFile(context.config.getControlPortFile().getAbsolutePath());
+        if (controlPortFile != null) {
+            return controlPortWriteToFile(controlPortFile.getAbsolutePath());
+        }
+        return this;
     }
 
     public TorConfigBuilder debugLogs() {
@@ -198,7 +222,7 @@ public final class TorConfigBuilder {
 
     @SettingsConfig
     public TorConfigBuilder dormantCanceledByStartupFromSettings() {
-        if(settings.hasDormantCanceledByStartup()) {
+        if (settings.hasDormantCanceledByStartup()) {
             dormantCanceledByStartup();
         }
         return this;
@@ -271,10 +295,9 @@ public final class TorConfigBuilder {
      */
     @SettingsConfig
     public TorConfigBuilder nonExitRelayFromSettings() {
-        if (!settings.hasReachableAddress() && !settings.hasBridges() && settings.isRelay()) {
+        if (nameserverFile != null && !settings.hasReachableAddress() && !settings.hasBridges() && settings.isRelay()) {
             try {
-                File resolv = context.createGoogleNameserverFile();
-                makeNonExitRelay(resolv.getCanonicalPath(), settings.getRelayPort(), settings
+                makeNonExitRelay(nameserverFile.getCanonicalPath(), settings.getRelayPort(), settings
                         .getRelayNickname());
             } catch (Exception e) {
                 e.printStackTrace();
@@ -391,10 +414,11 @@ public final class TorConfigBuilder {
     }
 
     public TorConfigBuilder setGeoIpFiles() throws IOException {
-        TorConfig torConfig = context.getConfig();
-        if (torConfig.getGeoIpFile().exists()) {
-            geoIpFile(torConfig.getGeoIpFile().getCanonicalPath())
-                    .geoIpV6File(torConfig.getGeoIpv6File().getCanonicalPath());
+        if (geoIpFile != null && geoIpFile.exists()) {
+            geoIpFile(geoIpFile.getCanonicalPath());
+        }
+        if (geoIpV6File != null && geoIpV6File.exists()) {
+            geoIpV6File(geoIpV6File.getCanonicalPath());
         }
         return this;
     }
@@ -555,8 +579,8 @@ public final class TorConfigBuilder {
      * </code>
      */
     TorConfigBuilder addBridgesFromResources() throws IOException {
-        if(settings.hasBridges()) {
-            InputStream bridgesStream = context.getInstaller().openBridgesStream();
+        if (settings.hasBridges()) {
+            InputStream bridgesStream = this.bridgesStream;
             int formatType = bridgesStream.read();
             if (formatType == 0) {
                 addBridges(bridgesStream);
