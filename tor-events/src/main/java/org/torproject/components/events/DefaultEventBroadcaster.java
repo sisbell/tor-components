@@ -12,6 +12,8 @@ See the Apache 2 License for the specific language governing permissions and lim
 */
 package org.torproject.components.events;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Default EventBroadcaster. broadcastBandwidth, broadcastLogMessage, broadcastStatus are all
  * no operations. If you need to implement these broadcast methods, then create a new class
@@ -23,8 +25,8 @@ public final class DefaultEventBroadcaster extends BaseEventBroadcaster {
         super(null);
     }
 
-    public DefaultEventBroadcaster(TorSettings settings) {
-        super(settings);
+    public DefaultEventBroadcaster(AtomicBoolean debugLogsEnabled) {
+        super(debugLogsEnabled);
     }
 
     @Override

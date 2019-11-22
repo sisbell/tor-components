@@ -18,21 +18,22 @@ import org.slf4j.LoggerFactory;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class BaseEventBroadcaster implements EventBroadcaster {
 
     protected static final Logger LOG = LoggerFactory.getLogger(BaseEventBroadcaster.class);
-    protected final TorSettings mSettings;
+    protected final AtomicBoolean debugLogsEnabled;
     protected final Status mStatus;
 
-    public BaseEventBroadcaster(TorSettings settings) {
-        mSettings = settings == null ? new DefaultSettings() : settings;
+    public BaseEventBroadcaster(AtomicBoolean debugLogsEnabled) {
+        this.debugLogsEnabled = debugLogsEnabled == null ? new AtomicBoolean(false) : debugLogsEnabled;
         mStatus = new Status(this);
     }
 
     @Override
     public void broadcastDebug(String msg) {
-        if (mSettings.hasDebugLogs()) {
+        if (debugLogsEnabled.get()) {
             LOG.debug(msg);
             broadcastLogMessage(msg);
         }
@@ -40,7 +41,7 @@ public abstract class BaseEventBroadcaster implements EventBroadcaster {
 
     @Override
     public void broadcastException(String msg, Exception e) {
-        if (mSettings.hasDebugLogs()) {
+        if (debugLogsEnabled.get()) {
             LOG.error(msg, e);
             StringWriter sw = new StringWriter();
             e.printStackTrace(new PrintWriter(sw));
@@ -53,7 +54,7 @@ public abstract class BaseEventBroadcaster implements EventBroadcaster {
     @Override
     public void broadcastNotice(String msg) {
         if (msg != null && !msg.isEmpty()) {
-            if (mSettings.hasDebugLogs()) {
+            if (debugLogsEnabled.get()) {
                 LOG.debug(msg);
             }
             broadcastLogMessage(msg);
