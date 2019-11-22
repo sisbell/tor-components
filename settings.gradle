@@ -1,3 +1,5 @@
 rootProject.name = 'components'
 include 'tor-settings'
+include 'tor-events'
+
 
