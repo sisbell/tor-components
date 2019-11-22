@@ -19,7 +19,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotates TorConfigBuilder methods. When TorConfigBuilder.updateTorConfig is invoked, it will use this annotation
+ * Annotates TorSettingsBuilder methods. When TorSettingsBuilder.updateTorConfig is invoked, it will use this annotation
  * to automatically detect and use the associated method as part of building the config.
  *
  * The annotated method must have a no args.
